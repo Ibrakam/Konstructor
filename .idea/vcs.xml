@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/modul/clientbot" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/modul/clientbot/handlers/kino_bot" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/modul/clientbot/handlers/refs" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/modul/templates/DxBot" vcs="Git" />
+  </component>
+</project>
