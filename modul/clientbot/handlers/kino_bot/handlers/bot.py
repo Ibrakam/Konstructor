@@ -12,6 +12,8 @@ from aiogram.types import CallbackQuery, Message, InlineKeyboardButton, InlineKe
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from django.db import transaction
 
+from modul.clientbot.handlers.leomatch.data.state import LeomatchRegistration
+from modul.clientbot.handlers.leomatch.handlers.registration import bot_start_lets_leo, leomatch_handlers
 from modul import models
 from modul.clientbot import shortcuts
 from modul.clientbot.data.states import Download
@@ -96,7 +98,7 @@ async def get_films_kb(data: dict) -> types.InlineKeyboardMarkup:
             callback_data=f'watch_film|{film["id"]}'
         )
 
-    return kb.adjust(5).as_markup()
+    return kb.adjust(1).as_markup()
 
 
 async def get_remove_channel_sponsor_kb(channels: list, bot: Bot) -> types.InlineKeyboardMarkup:
@@ -214,7 +216,7 @@ async def start_kino_bot(message: Message, state: FSMContext, bot: Bot):
     await state.set_state(SearchFilmForm.query)
     await message.answer(
         '<b>Отправьте название фильма / сериала / аниме</b>\n\nНе указывайте года, озвучки и т.д.\n\nПравильный пример: Ведьмак\nНеправильный пример: Ведьмак 2022',
-        parse_mode="HTML")
+        parse_mode="HTML", reply_markup=await reply_kb.refs_kb())
 
 
 @sync_to_async
@@ -258,13 +260,14 @@ async def start(message: Message, state: FSMContext, bot: Bot):
     uid = message.from_user.id
     text = "Добро пожаловать, {hello}".format(hello=html.quote(message.from_user.full_name))
     kwargs = {}
-    
+
     if shortcuts.have_one_module(bot_db, "download"):
         text = ("🤖 Привет, {full_name}! Я бот-загрузчик.\r\n\r\n"
                 "Я могу скачать фото/видео/аудио/файлы/архивы с *Youtube, Instagram, TikTok, Facebook, SoundCloud, Vimeo, Вконтакте, Twitter и 1000+ аудио/видео/файловых хостингов*. Просто пришли мне URL на публикацию с медиа или прямую ссылку на файл.").format(
             full_name=message.from_user.full_name)
         await state.set_state(Download.download)
         kwargs['parse_mode'] = "Markdown"
+        kwargs['reply_markup'] = await reply_kb.refs_kb()
     elif shortcuts.have_one_module(bot_db, "refs"):
         await start_ref(message)
         kwargs['parse_mode'] = "HTML"
@@ -278,8 +281,14 @@ async def start(message: Message, state: FSMContext, bot: Bot):
     else:
         kwargs['reply_markup'] = await reply_kb.main_menu(uid, bot)
     await message.answer(text, **kwargs)
+
+
 # print(client_bot_router.message.handlers)
 client_bot_router.message.register(bot_start, F.text == "🫰 Знакомства")
+client_bot_router.message.register(bot_start_lets_leo, F.text == "Давай, начнем!", LeomatchRegistration.BEGIN)
+
+
+leomatch_handlers()
 
 @client_bot_router.message(CommandStart())
 async def start_on(message: Message, state: FSMContext, bot: Bot, command: CommandObject):
@@ -344,7 +353,7 @@ async def watch_film(call: CallbackQuery, state: FSMContext):
     try:
         await call.message.answer_photo(photo=film_data['poster'],
                                         caption=caption,
-                                        reply_markup=kb)
+                                        reply_markup=kb, parse_mode="HTML")
     except Exception:
         await call.message.answer(caption, reply_markup=kb)
 

@@ -7,6 +7,7 @@ import time
 
 import requests
 from aiohttp import TCPConnector
+from django import forms
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
@@ -162,9 +163,18 @@ logger = logging.getLogger(__name__)
 
 
 class BotForm(ModelForm):
+    MODULE_CHOICES = [
+        ('no_module', 'Нет модуля'),
+        ('leo', 'Дайвинчик'),
+        ('refs', 'Реферальный бот'),
+        ('kino', 'Кино бот'),
+        ('download', 'All save бот'),
+    ]
+    module = forms.ChoiceField(choices=MODULE_CHOICES, required=True)
+
     class Meta:
         model = Bot
-        fields = ['token']
+        fields = ['token', 'module']
 
     def clean_token(self):
         token = self.cleaned_data['token']
@@ -194,12 +204,21 @@ def save_token(request):
     form = BotForm(request.POST)
     if form.is_valid():
         token = form.cleaned_data['token']
+        module = form.cleaned_data['module']
         try:
             bot_username = get_bot_username(token)
             url = settings_conf.WEBHOOK_URL.format(token=token)
 
-            # Создаем объект Bot
-            bot = Bot.objects.create(token=token, owner=request.user, username=bot_username)
+            # Create Bot object with selected module
+            bot = Bot(
+                token=token,
+                owner=request.user,
+                username=bot_username,
+                enable_leo=module == 'leo',
+                enable_refs=module == 'refs',
+                enable_kino=module == 'kino',
+                enable_download=module == 'download'
+            )
 
             # Установка вебхука
             try:

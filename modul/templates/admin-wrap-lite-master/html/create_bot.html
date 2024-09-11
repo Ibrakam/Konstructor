@@ -90,6 +90,7 @@
             background-color: rgba(0, 0, 0, 0.5);
             justify-content: center;
             align-items: center;
+	    overflow-y: auto;
         }
 
         .modal-content {
@@ -98,8 +99,10 @@
             border-radius: 10px;
             max-width: 500px;
             width: 90%;
+	    max-height: 90%;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             position: relative;
+	    overflow-y: auto;
         }
 
         .modal-header {
@@ -292,6 +295,70 @@
         .bot-item {
             margin-top: 10px;
         }
+        
+         .module-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .module-selection label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .module-selection input[type="radio"] {
+            display: none;
+        }
+
+        .module-selection .radio-custom {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #007bff;
+            border-radius: 50%;
+            margin-right: 10px;
+            position: relative;
+        }
+
+        .module-selection .radio-custom::after {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background-color: #007bff;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .module-selection input[type="radio"]:checked + .radio-custom::after {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        input[type="text"], button[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 
@@ -458,11 +525,11 @@
                             <h2>Ваши Telegram боты</h2>
                             <ul class="bot-list">
                                 {% for item in all_user_bot%}
-                                <li data-bot-id="{{ item.id }}" class="bot-item">
-                                    <img src="https://via.placeholder.com/40x40?text=Bot" alt="Bot">
-                                    <span class="bot-name">{{item.username}}</span>
-                                    <span class="bot-status">{% if item.bot_enable %}Работает{% else %}Отключен{% endif %}</span>
-                                </li>
+<li data-bot-id="{{ item.id }}" class="bot-item">
+    <img src="https://static.vecteezy.com/system/resources/previews/023/986/562/original/telegram-logo-telegram-logo-transparent-telegram-icon-transparent-free-free-png.png" alt="Bot" style="width: 30px;  height: 26px;">
+    <span class="bot-name">{{item.username}}</span>
+    <span class="bot-status">{% if item.bot_enable %}Работает{% else %}Отключен{% endif %}</span>
+</li>
                                 {% endfor %}
                             </ul>
                         </div>
@@ -535,9 +602,37 @@
                 <form id="tokenForm" action="{% url 'save_token' %}" method="POST">
                     {% csrf_token %}
                     <input type="text" name="token" placeholder="Введите Токен" required>
-                    <div class="modal-footer">
-                        <button type="submit">Сохранить токен</button>
+                     <h3>Выберите модуль:</h3>
+                <div class="module-selection">
+                        <label>
+                            <input type="radio" name="module" value="no_module" checked>
+                            <span class="radio-custom"></span>
+                            Нет модуля
+                        </label>
+                        <label>
+                            <input type="radio" name="module" value="leo">
+                            <span class="radio-custom"></span>
+                            Дайвинчик
+                        </label>
+                        <label>
+                            <input type="radio" name="module" value="refs">
+                            <span class="radio-custom"></span>
+                            Реферальный бот
+                        </label>
+                        <label>
+                            <input type="radio" name="module" value="kino">
+                            <span class="radio-custom"></span>
+                            Кино бот
+                        </label>
+                        <label>
+                            <input type="radio" name="module" value="download">
+                            <span class="radio-custom"></span>
+                            All save бот
+                        </label>
                     </div>
+                <div class="modal-footer">
+                    <button type="submit">Сохранить токен и настройки</button>
+                </div>
                 </form>
 
             </div>

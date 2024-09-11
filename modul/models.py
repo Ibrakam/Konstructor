@@ -324,7 +324,7 @@ class Withdrawals(models.Model):
 
 class Channels(models.Model):
     channel_url = models.CharField(max_length=255, unique=True)
-    channel_id = models.IntegerField(unique=True)
+    channel_id = models.BigIntegerField(unique=True)
     admins_channel = models.BooleanField(default=False)
 
 

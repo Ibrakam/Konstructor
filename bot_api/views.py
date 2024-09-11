@@ -10,9 +10,10 @@ from django.dispatch import receiver
 from django.core.signals import request_started
 from asgiref.sync import async_to_sync
 from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
 from aiogram.types import Update
 import json
-
+#from modul.clientbot.handlers.leomatch.handlers.registration import leomatch_start_handler
 from modul.bot.main_bot.main import init_bot_handlers
 from modul.clientbot.handlers.main import start_bot_client
 from modul.clientbot.shortcuts import get_bot_by_token
@@ -23,9 +24,10 @@ import tracemalloc
 
 tracemalloc.start()
 
-
+default = DefaultBotProperties(parse_mode="HTML")
 def setup_routers():
     if not hasattr(dp, 'routers_setup'):
+#        leomatch_start_handler()
         start_bot_client()
         init_bot_handlers()
         setup_main_bot_filter(main_bot_router, client_bot_router)
@@ -48,7 +50,7 @@ def telegram_webhook(request, token):
 
 
 async def feed_update(token, update):
-    async with Bot(token, bot_session).context(auto_close=False) as bot_:
+    async with Bot(token, bot_session, default=default).context(auto_close=False) as bot_:
         await dp.feed_raw_update(bot_, update)
 
 

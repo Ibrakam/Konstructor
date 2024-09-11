@@ -168,6 +168,14 @@ async def main_menu(uid: int, bot: CBot):
     return builder.as_markup(resize_keyboard=True)
 
 
+async def refs_kb():
+    buttons = [
+        [KeyboardButton(text="💸Заработать"), ]
+    ]
+    kb = ReplyKeyboardMarkup(resize_keyboard=True, keyboard=buttons)
+    return kb
+
+
 def confirm():
     builder = ReplyKeyboardBuilder()
     builder.row(
