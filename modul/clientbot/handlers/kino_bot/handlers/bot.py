@@ -12,6 +12,7 @@ from aiogram.types import CallbackQuery, Message, InlineKeyboardButton, InlineKe
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from django.db import transaction
 
+from modul.clientbot.handlers.annon_bot.handlers.bot import start_anon_bot
 from modul.clientbot.handlers.leomatch.data.state import LeomatchRegistration
 from modul.clientbot.handlers.leomatch.handlers.registration import bot_start_lets_leo, leomatch_handlers
 from modul import models
@@ -255,7 +256,7 @@ async def save_user(u, bot: Bot, inviter=None):
     return client_user
 
 
-async def start(message: Message, state: FSMContext, bot: Bot):
+async def start(message: Message, state: FSMContext, bot: Bot, command: BotCommand):
     bot_db = await shortcuts.get_bot(bot)
     uid = message.from_user.id
     text = "Добро пожаловать, {hello}".format(hello=html.quote(message.from_user.full_name))
@@ -270,10 +271,10 @@ async def start(message: Message, state: FSMContext, bot: Bot):
         kwargs['reply_markup'] = await reply_kb.refs_kb()
     elif shortcuts.have_one_module(bot_db, "refs"):
         await start_ref(message)
-        kwargs['parse_mode'] = "HTML"
     elif shortcuts.have_one_module(bot_db, "kino"):
         await start_kino_bot(message, state, bot)
-        kwargs['parse_mode'] = "HTML"
+    elif shortcuts.have_one_module(bot_db, "anon"):
+        await start_anon_bot(message, state, command)
 
     # elif shortcuts.have_one_module(bot_db, "anon"):
     #     # text = cabinet_text()
@@ -288,45 +289,44 @@ client_bot_router.message.register(bot_start, F.text == "🫰 Знакомств
 client_bot_router.message.register(bot_start_lets_leo, F.text == "Давай, начнем!", LeomatchRegistration.BEGIN)
 
 
-leomatch_handlers()
+def start_all_bot_handlers():
+    @client_bot_router.message(CommandStart())
+    async def start_on(message: Message, state: FSMContext, bot: Bot, command: CommandObject, bot_command: BotCommand):
+        bot_db = await shortcuts.get_bot(bot)
 
-@client_bot_router.message(CommandStart())
-async def start_on(message: Message, state: FSMContext, bot: Bot, command: CommandObject):
-    bot_db = await shortcuts.get_bot(bot)
+        info = await get_user(uid=message.from_user.id, username=message.from_user.username,
+                              first_name=message.from_user.first_name if message.from_user.first_name else None,
+                              last_name=message.from_user.last_name if message.from_user.last_name else None)
+        await state.clear()
+        commands = await bot.get_my_commands()
+        bot_commands = [
+            BotCommand(command="/start", description="Меню"),
+        ]
+        print('command start')
+        if commands != bot_commands:
+            await bot.set_my_commands(bot_commands)
+        referral = command.args
+        uid = message.from_user.id
+        user = await shortcuts.get_user(uid, bot)
 
-    info = await get_user(uid=message.from_user.id, username=message.from_user.username,
-                          first_name=message.from_user.first_name if message.from_user.first_name else None,
-                          last_name=message.from_user.last_name if message.from_user.last_name else None)
-    await state.clear()
-    commands = await bot.get_my_commands()
-    bot_commands = [
-        BotCommand(command="/start", description="Меню"),
-    ]
-    print('command start')
-    if commands != bot_commands:
-        await bot.set_my_commands(bot_commands)
-    referral = command.args
-    uid = message.from_user.id
-    user = await shortcuts.get_user(uid, bot)
-
-    if not user:
-        if referral and referral.isdigit():
-            inviter = await shortcuts.get_user(int(referral))
-            if inviter:
-                await shortcuts.increase_referral(inviter)
-                with suppress(TelegramForbiddenError):
-                    user_link = html.link('реферал', f'tg://user?id={uid}')
-                    await bot.send_message(
-                        chat_id=referral,
-                        text=('new_referral').format(
-                            user_link=user_link,
+        if not user:
+            if referral and referral.isdigit():
+                inviter = await shortcuts.get_user(int(referral))
+                if inviter:
+                    await shortcuts.increase_referral(inviter)
+                    with suppress(TelegramForbiddenError):
+                        user_link = html.link('реферал', f'tg://user?id={uid}')
+                        await bot.send_message(
+                            chat_id=referral,
+                            text=('new_referral').format(
+                                user_link=user_link,
+                            )
                         )
-                    )
-        else:
-            inviter = None
-        await save_user(u=message.from_user, inviter=inviter, bot=bot)
-    await start(message, state, bot)
-    return
+            else:
+                inviter = None
+            await save_user(u=message.from_user, inviter=inviter, bot=bot)
+        await start(message, state, bot, bot_command)
+        return
 
 
 @client_bot_router.callback_query(F.data == 'start_search')

@@ -117,7 +117,6 @@ class Bot(models.Model):
             return f"{self.username} (Нет активных модулей)"
 
 
-
 class UserTG(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tg_profile',
                                 null=True, blank=True)
@@ -134,6 +133,8 @@ class UserTG(models.Model):
     last_interaction = models.DateTimeField(null=True, blank=True, default=datetime.now(tz=utc))
     interaction_count = models.IntegerField(null=True, blank=True, default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+    user_link = models.CharField(unique=True, null=True)
+    greeting = models.CharField(default="Добро пожаловать!", max_length=255, null=True)
 
     def __str__(self):
         return self.username or f'User {self.uid}'
@@ -336,3 +337,33 @@ class AdminInfo(models.Model):
 
 class ChannelSponsor(models.Model):
     chanel_id = models.BigIntegerField()
+
+
+class Messages(models.Model):
+    sender_id = models.IntegerField()
+    receiver_id = models.IntegerField()
+    sender_message_id = models.IntegerField()
+    receiver_message_id = models.IntegerField()
+    reg_date = models.DateTimeField(auto_now_add=True)
+
+
+class Link_statistic(models.Model):
+    user_id = models.IntegerField()
+    reg_date = models.DateTimeField(auto_now_add=True)
+
+
+class Answer_statistic(models.Model):
+    user_id = models.IntegerField()
+    reg_date = models.DateTimeField(auto_now_add=True)
+
+
+class Rating_today(models.Model):
+    user_id = models.IntegerField()
+    amount = models.IntegerField()
+    reg_date = models.DateTimeField(auto_now_add=True)
+
+
+class Rating_overall(models.Model):
+    user_id = models.IntegerField()
+    amount = models.IntegerField()
+    reg_date = models.DateTimeField(auto_now_add=True)

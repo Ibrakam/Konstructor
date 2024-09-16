@@ -5,7 +5,7 @@ from django.shortcuts import render
 # Create your views here.
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-
+from modul.clientbot.handlers.leomatch.handlers.start import leo_start
 from django.dispatch import receiver
 from django.core.signals import request_started
 from asgiref.sync import async_to_sync
@@ -13,6 +13,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import Update
 import json
+from modul.clientbot.handlers.kino_bot.handlers.bot import start_all_bot_handlers
 #from modul.clientbot.handlers.leomatch.handlers.registration import leomatch_start_handler
 from modul.bot.main_bot.main import init_bot_handlers
 from modul.clientbot.handlers.main import start_bot_client
@@ -24,10 +25,12 @@ import tracemalloc
 
 tracemalloc.start()
 
+print(client_bot_router.message.handlers)
+
 default = DefaultBotProperties(parse_mode="HTML")
 def setup_routers():
     if not hasattr(dp, 'routers_setup'):
-#        leomatch_start_handler()
+        start_all_bot_handlers()
         start_bot_client()
         init_bot_handlers()
         setup_main_bot_filter(main_bot_router, client_bot_router)

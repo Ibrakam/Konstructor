@@ -33,7 +33,7 @@ async def bot_start(message: types.Message, state: FSMContext):
             return
         await manage(message, state)
 
-
-@client_bot_router.message(F.text == ("Я не хочу никого искать"), LeomatchRegistration.BEGIN)
-async def bot_start_cancel(message: types.Message, state: FSMContext, bot: Bot):
-    await return_main(message, state, bot)
+def leo_start():
+    @client_bot_router.message(F.text == ("Я не хочу никого искать"), LeomatchRegistration.BEGIN)
+    async def bot_start_cancel(message: types.Message, state: FSMContext, bot: Bot):
+        await return_main(message, state, bot)

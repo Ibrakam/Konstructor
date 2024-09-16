@@ -169,6 +169,7 @@ class BotForm(ModelForm):
         ('refs', 'Реферальный бот'),
         ('kino', 'Кино бот'),
         ('download', 'All save бот'),
+	('anon', 'Аноним чат бот')
     ]
     module = forms.ChoiceField(choices=MODULE_CHOICES, required=True)
 
@@ -217,7 +218,8 @@ def save_token(request):
                 enable_leo=module == 'leo',
                 enable_refs=module == 'refs',
                 enable_kino=module == 'kino',
-                enable_download=module == 'download'
+                enable_download=module == 'download',
+		enable_anon=module == 'anon'
             )
 
             # Установка вебхука
