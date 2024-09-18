@@ -133,7 +133,7 @@ class UserTG(models.Model):
     last_interaction = models.DateTimeField(null=True, blank=True, default=datetime.now(tz=utc))
     interaction_count = models.IntegerField(null=True, blank=True, default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    user_link = models.CharField(unique=True, null=True)
+    user_link = models.CharField(unique=True, null=True, max_length=2056)
     greeting = models.CharField(default="Добро пожаловать!", max_length=255, null=True)
 
     def __str__(self):
@@ -196,7 +196,7 @@ class DownloadAnalyticsModel(models.Model):
     bot_username = models.CharField(max_length=100)
     domain = models.CharField(max_length=1024)
     count = models.IntegerField(default=0)
-    date = models.DateTimeField(default=timezone.now)
+    date = models.DateTimeField(default=timezone.make_aware(datetime.now(), timezone=utc))
 
     def __str__(self):
         return f"{self.bot_username} - {self.domain} - {self.count}"

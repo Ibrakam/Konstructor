@@ -39,27 +39,4 @@ async def music_menu(message: Message, state: FSMContext):
     )
 
 
-@sync_to_async
-def create_task_model(client, url):
-    info = TaskModel.objects.create(client=client, task_type=TaskTypeEnum.DOWNLOAD_MEDIA, data={'url': url})
-    return True
 
-
-@client_bot_router.message(Download.download)
-async def youtube_download_handler(message: Message, bot: Bot):
-    await message.answer(('📥 Скачиваю...'))
-    if not message.text:
-        await message.answer(('Пришлите ссылку на видео'))
-        return
-    if 'streaming' in message.text:
-        await message.answer(('Извините, но я не могу скачать стримы'))
-        return
-    me = await bot.get_me()
-    await shortcuts.add_to_analitic_data(me.username, message.text)
-    if 'instagram' in message.text:
-        new_url = message.text.replace('www.', 'dd')
-        await message.answer(
-            ('{new_url}\r\nВидео скачано через бота @{username}').format(new_url=new_url, username=me.username))
-        return
-    client = await shortcuts.get_user(message.from_user.id)
-    info = await create_task_model(client, message.text)

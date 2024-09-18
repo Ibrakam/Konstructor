@@ -35,23 +35,30 @@ async def save_media(message: types.Message, state: FSMContext, url: str, type: 
     await state.set_state(LeomatchRegistration.FINAL)
 
 
+@client_bot_router.message(F.text == "Давай, начнем!", LeomatchRegistration.BEGIN)
 async def bot_start_lets_leo(message: types.Message, state: FSMContext):
     await message.answer(
         (
             "Настоятельно рекомендуем указать username или в настройках разрешение на пересылку сообщения иначе Вам не смогут написать те, кого вы лайкните"))
     await begin_registration(message, state)
 
+
+@client_bot_router.message(LeomatchRegistration.AGE)
+async def bot_start(message: types.Message, state: FSMContext):
+    try:
+        age = int(message.text)
+        await state.set_data({"age": age})
+        await message.answer(("Теперь определимся с полом!"), reply_markup=reply_kb.chooice_sex())
+        await state.set_state(LeomatchRegistration.SEX)
+    except:
+        await message.answer(("Пожалуйста, введите возрост цифрами"), )
+
+
 @client_bot_router.message(F.text == ("Отменить"), LeomatchRegistration.AGE)
 async def bot_start(message: types.Message, state: FSMContext, bot: Bot):
     await message.answer(("Отменена регистрация!"), )
     await return_main(message, state, bot)
 
-
-def leomatch_handlers():
-    @client_bot_router.message(F.text == ("Отменить"), LeomatchRegistration.AGE)
-    async def bot_start(message: types.Message, state: FSMContext, bot: Bot):
-        await message.answer(("Отменена регистрация!"), )
-        await return_main(message, state, bot)
 
 @client_bot_router.message(F.text == ("Я парень"), LeomatchRegistration.SEX)
 async def bot_start(message: types.Message, state: FSMContext):
@@ -165,7 +172,7 @@ async def bot_start(message: types.Message, state: FSMContext, bot: Bot):
     file_path = f"/var/www/Konstruktor_web/modul/clientbot/handlers/leomatch/data/leo{message.from_user.id}.{format}"
 
     # try:
-        # Ensure directory exists
+    # Ensure directory exists
 
     async with Bot(token=bot.token, session=bot_session).context(auto_close=False) as bot_:
         await bot_.download(url, file_path)

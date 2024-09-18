@@ -2,7 +2,6 @@ import logging
 
 from modul.clientbot import shortcuts
 from modul.loader import client_bot_router
-from aiogram.filters import CommandStart
 from aiogram.utils.deep_linking import create_start_link, decode_payload
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, BotCommand, CallbackQuery

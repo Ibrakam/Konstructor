@@ -21,26 +21,26 @@ from loader import client_bot_router
 @client_bot_router.callback_query(ChatGPTCallbackData.filter())
 @flags.rate_limit(key="ChatGPTCallbackData")
 async def social_network(query: types.CallbackQuery, state: FSMContext, callback_data: ChatGPTCallbackData):
-    text = _("Введите текс")
+    text = ("Введите текс")
     if callback_data.model == 'gpt4':
-        text = _("Введите запрос для GPT4")
+        text = ("Введите запрос для GPT4")
     elif callback_data.model == 'gpt3':
-        text = _("Введите запрос для GPT3")
+        text = ("Введите запрос для GPT3")
     elif callback_data.model == 'dalle':
-        text = _("Введите описание для DALL-E")
+        text = ("Введите описание для DALL-E")
     elif callback_data.model == 'assistant':
-        text = _("Введите запрос для голосового ассистента")
+        text = ("Введите запрос для голосового ассистента")
     elif callback_data.model == 'text-to-speech':
-        text = _("Введите текст для преобразования в аудио")
+        text = ("Введите текст для преобразования в аудио")
     elif callback_data.model == 'speech-to-text':
-        text = _("Отправьте аудио для преобразования в текст")
+        text = ("Отправьте аудио для преобразования в текст")
     elif callback_data.model == 'youtube_transcription':
-        text = _(
+        text = (
             "Если у вас есть интересное видео на YouTube, которое вы хотели бы исследовать более глубоко, предлагаем вам уникальную возможность. Поделитесь с нами ссылкой на ваше видео, и наш инновационный сервис транскрибации преобразует аудиовизуальный контент в письменный текст.\r\n\r\n" \
             "Просто вставьте URL вашего видео в поле ниже, и мы займемся магией расшифровки. Вскоре вы получите полный текстовый отчет о том, что было сказано, позволяя вам анализировать информацию, делать заметки или цитировать интересующие вас моменты.\r\n\r\n" \
             "Мы ценим ваше время и стремимся сделать доступ к информации максимально удобным. Пожалуйста, введите ссылку на видео, и дайте нам возможность облегчить ваше погружение в мир знаний и открытий.")
     elif callback_data.model == 'google_search':
-        text = _("Введите запрос и я что-то сделаю")
+        text = ("Введите запрос и я что-то сделаю")
     await query.message.delete()
     await query.message.answer(text=text, reply_markup=cancel_input_prompt())
     await state.update_data(model=callback_data.model, use_context=callback_data.use_context)
@@ -57,7 +57,7 @@ async def social_network(query: types.CallbackQuery, state: FSMContext, callback
         user = await get_user(user_id)
         if user.current_ai_limit < callback_data.cost:
             await query.message.edit_text(
-                _("У вас недостаточно ⭐️ для выполнения запроса!"),
+                ("У вас недостаточно ⭐️ для выполнения запроса!"),
                 reply_markup=await get_kbrd_ai_balance(user_id, bot_db.percent)
             )
             return
@@ -67,14 +67,14 @@ async def social_network(query: types.CallbackQuery, state: FSMContext, callback
         bot.token, user_id, callback_data.video_id, callback_data.message_id, callback_data.cost),
                           id=f"ai-{user_id}-{callback_data.video_id}", replace_existing=False, max_instances=1),
     else:
-        await query.message.edit_text(_("Отменено!"), )
+        await query.message.edit_text(("Отменено!"), )
         await state.clear()
 
 
 @client_bot_router.callback_query(SpeechVoiceCallbackData.filter())
 @flags.rate_limit(key="SpeechVoiceCallbackData")
 async def social_network(query: types.CallbackQuery, state: FSMContext, callback_data: SpeechVoiceCallbackData):
-    text = _("Введите текст для озвучки: ")
+    text = ("Введите текст для озвучки: ")
     await query.message.delete()
     await query.message.answer(text=text, reply_markup=cancel_input_prompt())
     await state.update_data(model="text-to-speech", voice=callback_data.voice)
@@ -88,25 +88,25 @@ async def social_network(query: types.CallbackQuery, state: FSMContext, callback
         bot = Bot.get_current()
         bot_bd = await get_bot_by_token(bot.token)
         await query.message.edit_text(
-            _("└ Количество 🌟:"),
+            ("└ Количество 🌟:"),
             reply_markup=await get_kbrd_ai_balance(query.from_user.id, bot_bd.percent)
         )
     elif callback_data.action == 'balance':
         await state.update_data(amount=callback_data.rub)
         await state.update_data(gt=callback_data.gt)
         await state.update_data(type="gpt")
-        await query.message.answer(_("Выберите платежную систему"), reply_markup=await refill_balance_methods(False))
+        await query.message.answer(("Выберите платежную систему"), reply_markup=await refill_balance_methods(False))
         await state.set_state(RefillAmount.method)
     elif callback_data.action == 'cancel':
         await query.message.edit_text(
-            _("Отменено!"),
+            ("Отменено!"),
         )
 
 
 @client_bot_router.callback_query(text='ai-faq')
 @flags.rate_limit(key="ai-faq")
 async def social_network(query: types.CallbackQuery):
-    await query.message.edit_text(_("❔ Часто задаваемые вопросы:"), reply_markup=get_kbrd_faq())
+    await query.message.edit_text(("❔ Часто задаваемые вопросы:"), reply_markup=get_kbrd_faq())
 
 
 @client_bot_router.callback_query(text='ai-faq-about-bot')

@@ -25,7 +25,7 @@ from loader import bot_session
 
 async def get_cabinet_text(fisrt_name: str, last_name: str, user_id: int):
     me = await get_user(user_id)
-    return _("👤 Профиль: {fisrt_name} {last_name}\n\n⚡️ Баланс: {limit} ⭐").format(fisrt_name=fisrt_name or '',
+    return ("👤 Профиль: {fisrt_name} {last_name}\n\n⚡️ Баланс: {limit} ⭐").format(fisrt_name=fisrt_name or '',
                                                                                    last_name=last_name or '',
                                                                                    limit=me.current_ai_limit)
 
@@ -36,13 +36,13 @@ async def main_cabinet(message: Message, ):
         reply_markup=get_chatgt_main_kbrd())
 
 
-@client_bot_router.message(text=__("🌐 ИИ"))
+@client_bot_router.message(text=_("🌐 ИИ"))
 @flags.rate_limit(key="ai")
 async def music_menu(message: Message, state: FSMContext):
     await main_cabinet(message)
 
 
-@client_bot_router.message(text=__("🔍 Гугл поиск"))
+@client_bot_router.message(text=_("🔍 Гугл поиск"))
 @flags.rate_limit(key="ai-google-search")
 async def music_menu(message: Message, state: FSMContext):
     user = await get_user(message.from_user.id)

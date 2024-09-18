@@ -1,22 +1,20 @@
 import asyncio
 
-from django.shortcuts import render
 
 # Create your views here.
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from modul.clientbot.handlers.leomatch.handlers.start import leo_start
 from django.dispatch import receiver
 from django.core.signals import request_started
 from asgiref.sync import async_to_sync
-from aiogram import Bot, Dispatcher
+from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import Update
-import json
-from modul.clientbot.handlers.kino_bot.handlers.bot import start_all_bot_handlers
-#from modul.clientbot.handlers.leomatch.handlers.registration import leomatch_start_handler
+
 from modul.bot.main_bot.main import init_bot_handlers
 from modul.clientbot.handlers.main import start_bot_client
+# from modul.clientbot.handlers.main import start_client_bot
+
 from modul.clientbot.shortcuts import get_bot_by_token
 from modul.config import scheduler, settings_conf
 from modul.helpers.filters import setup_main_bot_filter
@@ -25,12 +23,12 @@ import tracemalloc
 
 tracemalloc.start()
 
-print(client_bot_router.message.handlers)
-
+print(scheduler.print_jobs())
 default = DefaultBotProperties(parse_mode="HTML")
+
+
 def setup_routers():
     if not hasattr(dp, 'routers_setup'):
-        start_all_bot_handlers()
         start_bot_client()
         init_bot_handlers()
         setup_main_bot_filter(main_bot_router, client_bot_router)
@@ -53,8 +51,11 @@ def telegram_webhook(request, token):
 
 
 async def feed_update(token, update):
-    async with Bot(token, bot_session, default=default).context(auto_close=False) as bot_:
-        await dp.feed_raw_update(bot_, update)
+    try:
+        async with Bot(token, bot_session, default=default).context(auto_close=False) as bot_:
+            await dp.feed_raw_update(bot_, update)
+    except Exception as e:
+        print(f"Error processing update: {e}")
 
 
 @receiver(request_started)

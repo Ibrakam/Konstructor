@@ -3,28 +3,28 @@ from contextlib import suppress
 
 from aiogram import Bot, F, html
 from aiogram.exceptions import TelegramForbiddenError
-from aiogram.filters import Command, CommandStart, CommandObject
+from aiogram.filters import Command, CommandStart, CommandObject, Filter
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.state import State, StatesGroup, StateFilter
 
 from aiogram.types import CallbackQuery, Message, InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultArticle, \
-    InputTextMessageContent, InlineQuery, BotCommand
+    InputTextMessageContent, InlineQuery, BotCommand, ReplyKeyboardRemove
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from django.db import transaction
 
-from modul.clientbot.handlers.annon_bot.handlers.bot import start_anon_bot
-from modul.clientbot.handlers.leomatch.data.state import LeomatchRegistration
-from modul.clientbot.handlers.leomatch.handlers.registration import bot_start_lets_leo, leomatch_handlers
 from modul import models
 from modul.clientbot import shortcuts
 from modul.clientbot.data.states import Download
 from modul.clientbot.handlers.kino_bot.shortcuts import *
 from modul.clientbot.handlers.kino_bot.keyboards.kb import *
 from modul.clientbot.handlers.kino_bot.api import *
-from modul.clientbot.handlers.leomatch.handlers.start import bot_start
+from modul.clientbot.handlers.leomatch.data.state import LeomatchRegistration
+from modul.clientbot.handlers.leomatch.handlers.registration import bot_start_lets_leo
+from modul.clientbot.handlers.leomatch.handlers.start import bot_start, bot_start_cancel
 from modul.clientbot.handlers.refs.handlers.bot import start_ref
 from modul.clientbot.keyboards import reply_kb
 from modul.clientbot.shortcuts import get_all_users
+from modul.helpers.jobs import task_runner
 from modul.loader import client_bot_router
 
 
@@ -217,7 +217,7 @@ async def start_kino_bot(message: Message, state: FSMContext, bot: Bot):
     await state.set_state(SearchFilmForm.query)
     await message.answer(
         '<b>Отправьте название фильма / сериала / аниме</b>\n\nНе указывайте года, озвучки и т.д.\n\nПравильный пример: Ведьмак\nНеправильный пример: Ведьмак 2022',
-        parse_mode="HTML", reply_markup=await reply_kb.refs_kb())
+        parse_mode="HTML", reply_markup=ReplyKeyboardRemove())
 
 
 @sync_to_async
@@ -256,25 +256,30 @@ async def save_user(u, bot: Bot, inviter=None):
     return client_user
 
 
-async def start(message: Message, state: FSMContext, bot: Bot, command: BotCommand):
+async def start(message: Message, state: FSMContext, bot: Bot):
     bot_db = await shortcuts.get_bot(bot)
     uid = message.from_user.id
     text = "Добро пожаловать, {hello}".format(hello=html.quote(message.from_user.full_name))
     kwargs = {}
-
+    print(bot_db)
     if shortcuts.have_one_module(bot_db, "download"):
         text = ("🤖 Привет, {full_name}! Я бот-загрузчик.\r\n\r\n"
                 "Я могу скачать фото/видео/аудио/файлы/архивы с *Youtube, Instagram, TikTok, Facebook, SoundCloud, Vimeo, Вконтакте, Twitter и 1000+ аудио/видео/файловых хостингов*. Просто пришли мне URL на публикацию с медиа или прямую ссылку на файл.").format(
             full_name=message.from_user.full_name)
         await state.set_state(Download.download)
+        print(client_bot_router.message.event_name)
         kwargs['parse_mode'] = "Markdown"
-        kwargs['reply_markup'] = await reply_kb.refs_kb()
+        kwargs['reply_markup'] = ReplyKeyboardRemove()
     elif shortcuts.have_one_module(bot_db, "refs"):
         await start_ref(message)
+        kwargs['parse_mode'] = "HTML"
     elif shortcuts.have_one_module(bot_db, "kino"):
         await start_kino_bot(message, state, bot)
+        kwargs['parse_mode'] = "HTML"
     elif shortcuts.have_one_module(bot_db, "anon"):
-        await start_anon_bot(message, state, command)
+        if uid == bot_db.owner.uid:
+            text = "Аноним чат в процессе разработки"
+            kwargs['reply_markup'] = ReplyKeyboardRemove()
 
     # elif shortcuts.have_one_module(bot_db, "anon"):
     #     # text = cabinet_text()
@@ -285,48 +290,45 @@ async def start(message: Message, state: FSMContext, bot: Bot, command: BotComma
 
 
 # print(client_bot_router.message.handlers)
-client_bot_router.message.register(bot_start, F.text == "🫰 Знакомства")
-client_bot_router.message.register(bot_start_lets_leo, F.text == "Давай, начнем!", LeomatchRegistration.BEGIN)
+# client_bot_router.message.register(bot_start, F.text == "🫰 Знакомства")
 
+@client_bot_router.message(CommandStart())
+async def start_on(message: Message, state: FSMContext, bot: Bot, command: CommandObject):
+    bot_db = await shortcuts.get_bot(bot)
 
-def start_all_bot_handlers():
-    @client_bot_router.message(CommandStart())
-    async def start_on(message: Message, state: FSMContext, bot: Bot, command: CommandObject, bot_command: BotCommand):
-        bot_db = await shortcuts.get_bot(bot)
+    info = await get_user(uid=message.from_user.id, username=message.from_user.username,
+                          first_name=message.from_user.first_name if message.from_user.first_name else None,
+                          last_name=message.from_user.last_name if message.from_user.last_name else None)
+    await state.clear()
+    commands = await bot.get_my_commands()
+    bot_commands = [
+        BotCommand(command="/start", description="Меню"),
+    ]
+    print('command start')
+    if commands != bot_commands:
+        await bot.set_my_commands(bot_commands)
+    referral = command.args
+    uid = message.from_user.id
+    user = await shortcuts.get_user(uid, bot)
 
-        info = await get_user(uid=message.from_user.id, username=message.from_user.username,
-                              first_name=message.from_user.first_name if message.from_user.first_name else None,
-                              last_name=message.from_user.last_name if message.from_user.last_name else None)
-        await state.clear()
-        commands = await bot.get_my_commands()
-        bot_commands = [
-            BotCommand(command="/start", description="Меню"),
-        ]
-        print('command start')
-        if commands != bot_commands:
-            await bot.set_my_commands(bot_commands)
-        referral = command.args
-        uid = message.from_user.id
-        user = await shortcuts.get_user(uid, bot)
-
-        if not user:
-            if referral and referral.isdigit():
-                inviter = await shortcuts.get_user(int(referral))
-                if inviter:
-                    await shortcuts.increase_referral(inviter)
-                    with suppress(TelegramForbiddenError):
-                        user_link = html.link('реферал', f'tg://user?id={uid}')
-                        await bot.send_message(
-                            chat_id=referral,
-                            text=('new_referral').format(
-                                user_link=user_link,
-                            )
+    if not user:
+        if referral and referral.isdigit():
+            inviter = await shortcuts.get_user(int(referral))
+            if inviter:
+                await shortcuts.increase_referral(inviter)
+                with suppress(TelegramForbiddenError):
+                    user_link = html.link('реферал', f'tg://user?id={uid}')
+                    await bot.send_message(
+                        chat_id=referral,
+                        text=('new_referral').format(
+                            user_link=user_link,
                         )
-            else:
-                inviter = None
-            await save_user(u=message.from_user, inviter=inviter, bot=bot)
-        await start(message, state, bot, bot_command)
-        return
+                    )
+        else:
+            inviter = None
+        await save_user(u=message.from_user, inviter=inviter, bot=bot)
+    await start(message, state, bot)
+    return
 
 
 @client_bot_router.callback_query(F.data == 'start_search')
@@ -395,32 +397,35 @@ async def get_results(message: types.Message, state: FSMContext, bot: Bot):
     await message.answer(f'<b>Результаты поиска по ключевому слову</b>: {message.text}', reply_markup=kb)
 
 
-@client_bot_router.message(F.text, StateFilter('*'))
+class KinoBotFilter(Filter):
+    async def __call__(self, message: types.Message, bot: Bot) -> bool:
+        bot_db = await shortcuts.get_bot(bot)
+        return shortcuts.have_one_module(bot_db, "kino")
+
+
+@client_bot_router.message(F.text, KinoBotFilter())
 async def simple_text_film_handler(message: Message, bot: Bot):
-    bot_db = await shortcuts.get_bot(bot)
-    if shortcuts.have_one_module(bot_db, "kino"):
+    sub_status = await check_subs(message.from_user.id, bot)
 
-        sub_status = await check_subs(message.from_user.id, bot)
-
-        if not sub_status:
-            kb = await get_subs_kb()
-            await message.answer('<b>Чтобы воспользоваться ботом, необходимо подписаться на каналы</b>',
-                                 reply_markup=kb)
-            return
-
-        results = await film_search(message.text)
-
-        if results['results_count'] == 0:
-            await message.answer(
-                '<b>По вашему запросу не найдено результатов!</b>\n\nПроверьте корректность введенных данных',
-                parse_mode="HTML")
-            return
-
-        kb = await get_films_kb(results)
-
-        await message.answer(f'<b>Результаты поиска по ключевому слову</b>: {message.text}', reply_markup=kb,
-                             parse_mode="HTML")
+    if not sub_status:
+        kb = await get_subs_kb()
+        await message.answer('<b>Чтобы воспользоваться ботом, необходимо подписаться на каналы</b>',
+                             reply_markup=kb)
         return
+
+    results = await film_search(message.text)
+
+    if results['results_count'] == 0:
+        await message.answer(
+            '<b>По вашему запросу не найдено результатов!</b>\n\nПроверьте корректность введенных данных',
+            parse_mode="HTML")
+        return
+
+    kb = await get_films_kb(results)
+
+    await message.answer(f'<b>Результаты поиска по ключевому слову</b>: {message.text}', reply_markup=kb,
+                         parse_mode="HTML")
+    return
 
 
 @client_bot_router.inline_query(F.query)
@@ -451,3 +456,45 @@ async def inline_film_requests(query: InlineQuery):
         inline_answer.append(answer)
 
     await query.answer(inline_answer, cache_time=240, is_personal=True)
+
+
+client_bot_router.message.register(bot_start, F.text == "🫰 Знакомства")
+client_bot_router.message.register(bot_start_cancel, F.text == ("Я не хочу никого искать"), LeomatchRegistration.BEGIN)
+client_bot_router.message.register(bot_start_lets_leo, F.text == "Давай, начнем!", LeomatchRegistration.BEGIN)
+
+
+@sync_to_async
+def create_task_model(client, url):
+    info = models.TaskModel.objects.create(client=client, task_type=models.TaskTypeEnum.DOWNLOAD_MEDIA,
+                                           data={'url': url})
+    return True
+
+
+@sync_to_async
+def get_user_tg(uid):
+    info = models.UserTG.objects.get(uid=uid)
+    return info
+
+
+# @client_bot_router.message(Download.download)
+async def youtube_download_handler(message: Message, bot: Bot):
+    await message.answer(('📥 Скачиваю...'))
+    # await task_runner()
+    if not message.text:
+        await message.answer(('Пришлите ссылку на видео'))
+        return
+    if 'streaming' in message.text:
+        await message.answer(('Извините, но я не могу скачать стримы'))
+        return
+    me = await bot.get_me()
+    await shortcuts.add_to_analitic_data(me.username, message.text)
+    if 'instagram' in message.text:
+        new_url = message.text.replace('www.', 'dd')
+        await message.answer(
+            ('{new_url}\r\nВидео скачано через бота @{username}').format(new_url=new_url, username=me.username))
+        return
+    client = await get_user_tg(message.from_user.id)
+    info = await create_task_model(client, message.text)
+
+
+client_bot_router.message.register(youtube_download_handler, Download.download)

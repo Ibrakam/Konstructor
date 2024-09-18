@@ -56,7 +56,7 @@ from utils.img_analitic.main import ImageAnaliticsDateRange, ImageAnaliticsSimpl
 
 @client_bot_router.message(IsAdminFilter(), commands="admin")
 async def enter_admin_panel(message: types.Message):
-    await message.answer(_("Панель администратора"), reply_markup=await inline_kb.admin_buttons())
+    await message.answer(("Панель администратора"), reply_markup=await inline_kb.admin_buttons())
 
 
 @client_bot_router.callback_query(Switch.filter())
@@ -79,15 +79,15 @@ async def switch_create_bot(query: types.CallbackQuery, callback_data: Switch, s
         await shortcuts.turn_bot_data("enable_anon")
     elif callback_data.action == "switch-sms":
         await shortcuts.turn_bot_data("enable_sms")
-    await query.message.edit_text(_("Панель администратора"), reply_markup=await inline_kb.admin_buttons())
+    await query.message.edit_text(("Панель администратора"), reply_markup=await inline_kb.admin_buttons())
 
 
 @client_bot_router.callback_query(Promocodes.filter())
 async def switch_create_bot(query: types.CallbackQuery, callback_data: Promocodes, state: FSMContext):
     if callback_data.action == "select":
         promocode = await PromocodesModel.filter(id=callback_data.promocode_id).first()
-        last_activate = promocode.last_used_at.strftime('%d.%m.%Y') if promocode.last_used_at else _("Не активирован")
-        await query.message.edit_text(_("Управление промокодом\n"
+        last_activate = promocode.last_used_at.strftime('%d.%m.%Y') if promocode.last_used_at else ("Не активирован")
+        await query.message.edit_text(("Управление промокодом\n"
                                         "Код: <code>{promocode_code}</code>\n"
                                         "Сумма: {promocode_sum}\n"
                                         "Рассчитан на: {promocode_count}\n"
@@ -105,17 +105,17 @@ async def switch_create_bot(query: types.CallbackQuery, callback_data: Promocode
     elif callback_data.action == "refill":
         await state.update_data(promocode_id=callback_data.promocode_id)
         await query.message.delete()
-        await query.message.answer(_("Введите кол-во добавления активации"), reply_markup=reply_kb.cancel())
+        await query.message.answer(("Введите кол-во добавления активации"), reply_markup=reply_kb.cancel())
         await state.set_state(PromocodeState.refill)
     elif callback_data.action == "add":
         await query.message.delete()
         await query.message.answer(
-            _("Отправьте сумму промокода.\nСумма указываете за единицу промокода. (например 50).\nВ последующем сообщении вы укажите количество активации (Например 5) следовательно, с Вашего баланса спишется 5 * 50 = 250 рублей."),
+            ("Отправьте сумму промокода.\nСумма указываете за единицу промокода. (например 50).\nВ последующем сообщении вы укажите количество активации (Например 5) следовательно, с Вашего баланса спишется 5 * 50 = 250 рублей."),
             reply_markup=reply_kb.cancel())
         await state.set_state(PromocodeState.set_sum)
     elif callback_data.action == "delete":
         promocode = await PromocodesModel.filter(id=callback_data.promocode_id).first()
-        await query.message.edit_text(_("Вы уверены, что хотите удалить промокод?\n"
+        await query.message.edit_text(("Вы уверены, что хотите удалить промокод?\n"
                                         "Промокод расчитан на {promocode_count} человек на сумму {promocode_sum}\n"
                                         "Было активированно {promocode_used_count} раз, посему вернется: {final_amount} руб.").format(
             promocode_count=promocode.count, promocode_sum=promocode.sum, promocode_used_count=promocode.used_count,
@@ -128,18 +128,18 @@ async def switch_create_bot(query: types.CallbackQuery, callback_data: Promocode
         await admin.save()
         await promocode.delete()
         uid = query.from_user.id
-        await query.message.edit_text(_("Панель управление промокодами"),
+        await query.message.edit_text(("Панель управление промокодами"),
                                       reply_markup=await inline_kb.promocode_menu(uid))
     elif callback_data.action == "back":
-        await query.message.edit_text(_("Панель администратора"), reply_markup=await inline_kb.admin_buttons())
+        await query.message.edit_text(("Панель администратора"), reply_markup=await inline_kb.admin_buttons())
 
 
 @client_bot_router.message(state=PromocodeState.refill)
 async def set_sum(message: types.Message, state: FSMContext):
-    if message.text == _("Отмена"):
+    if message.text == ("Отмена"):
         await message.delete()
         uid = message.from_user.id
-        await message.answer(_("Панель управление промокодами"), reply_markup=await inline_kb.promocode_menu(uid))
+        await message.answer(("Панель управление промокодами"), reply_markup=await inline_kb.promocode_menu(uid))
         return
     try:
         sum = int(message.text)

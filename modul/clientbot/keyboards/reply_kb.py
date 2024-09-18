@@ -36,11 +36,12 @@ HOROSCOPE_BUTTONS_TEXT = [
     ("🎩 Профиль"),
 ]
 
-ANON_MENU_BUTTONS_TEXT = [
-    ("☕ Искать собеседника"),
-    ("🍪 Профиль"),
-    "⭐ VIP",
-]
+
+# ANON_MENU_BUTTONS_TEXT = [
+#     ("☕ Искать собеседника"),
+#     ("🍪 Профиль"),
+#     "⭐ VIP",
+# ]
 
 
 def cancel():
@@ -133,31 +134,13 @@ async def gen_buttons(current_bot: Bot, uid: int):
     if current_bot.enable_promotion:
         btns.append(("ℹ️ Информация"))
     if current_bot.enable_anon:
-        if have_one_module(current_bot, "anon"):
-            [btns.append(i) for i in ANON_MENU_BUTTONS_TEXT]
-        else:
-            btns.append(("🥂 Анонимный чат"))
+        btns.append(("🥂 Анонимный чат"))
+    # if current_bot.enable_refs:
     btns.append(("💸Заработать"))
     return btns
 
 
-async def gen_buttons_anon(current_bot: Bot, uid: int):
-    btns = []
-    owner = await current_bot.owner
-    if current_bot.enable_anon:
-        if have_one_module(current_bot, "anon"):
-            [btns.append(i) for i in ANON_MENU_BUTTONS_TEXT]
-        else:
-            btns.append(("🥂 Анонимный чат"))
-    if current_bot.enable_child_bot and owner.uid != uid:
-        btns.append(("🤖 Создать своего бота"))
-    if await current_bot.parent != None and owner.uid == uid:
-        btns.append(("📬 Мой кабинет"))
 
-    bots_count = await owner.bots.filter(owner=owner, unauthorized=False).count()
-    if bots_count > 1:
-        btns.append(("✨ Список наших ботов"))
-    return btns
 
 
 async def main_menu(uid: int, bot: CBot):

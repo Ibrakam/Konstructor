@@ -15,10 +15,7 @@ from aiogram.utils.i18n import lazy_gettext as __
 from modul.models import UserTG
 
 
-
-
-
-# @client_bot_router.message(F.text == "🫰 Знакомства")
+@client_bot_router.message(F.text == "🫰 Знакомства")
 async def bot_start(message: types.Message, state: FSMContext):
     has_user = await exists_leo(message.from_user.id)
     if not has_user:
@@ -33,7 +30,9 @@ async def bot_start(message: types.Message, state: FSMContext):
             return
         await manage(message, state)
 
-def leo_start():
-    @client_bot_router.message(F.text == ("Я не хочу никого искать"), LeomatchRegistration.BEGIN)
-    async def bot_start_cancel(message: types.Message, state: FSMContext, bot: Bot):
-        await return_main(message, state, bot)
+
+
+
+@client_bot_router.message(F.text == ("Я не хочу никого искать"), LeomatchRegistration.BEGIN)
+async def bot_start_cancel(message: types.Message, state: FSMContext, bot: Bot):
+    await return_main(message, state, bot)

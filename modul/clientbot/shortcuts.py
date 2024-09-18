@@ -286,14 +286,14 @@ async def get_new_users_count(bot: Bot):
 #     match = re.match(pattern, url)
 #     return match.group(1) if match else "None"
 
-
-async def add_to_analitic_data(bot_username: str, link: str, ignore_domain: bool = False):
+@sync_to_async
+def add_to_analitic_data(bot_username: str, link: str, ignore_domain: bool = False):
     now = datetime.now()
     domain = get_domain(link) if not ignore_domain else link
-    instance = await models.DownloadAnalyticsModel.objects.filter(bot_username=bot_username, domain=domain,
+    instance = models.DownloadAnalyticsModel.objects.filter(bot_username=bot_username, domain=domain,
                                                                   date__gte=now).first()
     if not instance:
-        await models.DownloadAnalyticsModel.objects.create(
+        models.DownloadAnalyticsModel.objects.create(
             bot_username=bot_username,
             domain=domain,
             count=1,
@@ -301,4 +301,4 @@ async def add_to_analitic_data(bot_username: str, link: str, ignore_domain: bool
         )
     else:
         instance.count += 1
-        await instance.save()
+        instance.save()
