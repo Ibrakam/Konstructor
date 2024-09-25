@@ -23,7 +23,7 @@ MEDIA_ROOT = BASE_DIR / "downloads"
 class Settings(BaseSettings):
     # HOST: str
     WEBHOOK_PATH: str = "/bot/webhook/{token}"
-    WEBHOOK_URL: str = 'https://bf7b-93-185-163-243.ngrok-free.app/bot/webhook/{token}/'
+    WEBHOOK_URL: str = 'https://test.telier.uz/bot/webhook/{token}/'
 
     BOT_TOKEN: str = '6463653390:AAFCmUhro2O-FpGcTwlAlUIu_R3_Pq24WJ0'
     # ERROR_CHANNEL: str
