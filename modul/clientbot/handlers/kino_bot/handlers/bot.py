@@ -228,12 +228,12 @@ def get_user(uid: int, username: str, first_name: str = None, last_name: str = N
 
 @sync_to_async
 @transaction.atomic
-async def save_user(u, bot: Bot, inviter=None):
-    bot = await sync_to_async(models.Bot.objects.select_related("owner").filter(token=bot.token).first)()
-    user = await sync_to_async(models.UserTG.objects.filter(uid=u.id).first)()
+def save_user(u, bot: Bot, inviter=None):
+    bot = models.Bot.objects.select_related("owner").filter(token=bot.token).first()
+    user = models.UserTG.objects.filter(uid=u.id).first()
     current_ai_limit = 12
     if not user:
-        user = await sync_to_async(models.UserTG.objects.create)(
+        user = models.UserTG.objects.create(
             uid=u.id,
             username=u.username,
             first_name=u.first_name,
@@ -242,11 +242,11 @@ async def save_user(u, bot: Bot, inviter=None):
     else:
         current_ai_limit = 0
 
-    client_user = await sync_to_async(models.ClientBotUser.objects.filter(uid=u.id, bot=bot).first)()
+    client_user = models.ClientBotUser.objects.filter(uid=u.id, bot=bot).first()
     if client_user:
         return client_user
 
-    client_user = await sync_to_async(models.ClientBotUser.objects.create)(
+    client_user = models.ClientBotUser.objects.create(
         uid=u.id,
         user=user,
         bot=bot,

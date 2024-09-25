@@ -2,6 +2,7 @@ import os
 
 from aiogram import types, Bot, F
 from aiogram.exceptions import TelegramNetworkError
+from aiogram.types import Message
 
 from modul.clientbot.handlers.leomatch.keyboards import reply_kb
 from modul.clientbot.handlers.leomatch.data.state import LeomatchRegistration
@@ -44,20 +45,19 @@ async def bot_start_lets_leo(message: types.Message, state: FSMContext):
 
 
 @client_bot_router.message(LeomatchRegistration.AGE)
-async def bot_start(message: types.Message, state: FSMContext):
+async def bot_start(message: Message, state: FSMContext, bot: Bot):
     try:
         age = int(message.text)
         await state.set_data({"age": age})
         await message.answer(("Теперь определимся с полом!"), reply_markup=reply_kb.chooice_sex())
         await state.set_state(LeomatchRegistration.SEX)
     except:
+        if message.text == "Отменить":
+            await message.answer(("Отменена регистрация!"), )
+            await return_main(message, state, bot)
+            return
         await message.answer(("Пожалуйста, введите возрост цифрами"), )
 
-
-@client_bot_router.message(F.text == ("Отменить"), LeomatchRegistration.AGE)
-async def bot_start(message: types.Message, state: FSMContext, bot: Bot):
-    await message.answer(("Отменена регистрация!"), )
-    await return_main(message, state, bot)
 
 
 @client_bot_router.message(F.text == ("Я парень"), LeomatchRegistration.SEX)

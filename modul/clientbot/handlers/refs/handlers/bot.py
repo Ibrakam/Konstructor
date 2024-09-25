@@ -73,8 +73,9 @@ async def start_ref(message: Message, command: BotCommand = None):
 
 
 @client_bot_router.message(F.text == "💸Заработать")
-async def gain(message: Message, bot: Bot):
+async def gain(message: Message, bot: Bot, state: FSMContext):
     bot_db = await shortcuts.get_bot(bot)
+    await state.clear()
     if shortcuts.have_one_module(bot_db, 'refs'):
         channels_checker = await check_channels(message)
         checker_banned = await banned(message)

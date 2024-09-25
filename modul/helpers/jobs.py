@@ -65,10 +65,11 @@ async def leo_alert_likes(bot):
 
 @sync_to_async
 def get_and_delete_task():
-    task = models.TaskModel.objects.select_related('client__bot').first()
+    task = models.TaskModel.objects.select_related('client').first()
     if task:
         task_copy = models.TaskModel.objects.filter(id=task.id).get()
         models.TaskModel.objects.filter(id=task.id).delete()
+        print(task_copy)
         return task_copy
     return None
 
@@ -121,4 +122,4 @@ lock_file = 'apscheduler.lock'
 # scheduler.add_job(leo_alert_likes, trigger=IntervalTrigger(minutes=1), coalesce=True, max_instances=25)
 # scheduler.add_job(horoscope_everyday, trigger=CronTrigger(hour=0, minute=0), coalesce=True, max_instances=1, replace_existing=False, misfire_grace_time=60)
 
-scheduler.add_job(task_runner, trigger=IntervalTrigger(seconds=10), max_instances=25)
+# scheduler.add_job(task_runner, trigger=IntervalTrigger(seconds=10), max_instances=25)
